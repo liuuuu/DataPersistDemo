@@ -14,3 +14,6 @@ PreferenceActivity 中只需调用`addPreferencesFromResource(R.xml.settings)`�
 它或将首选项保存到默认的共享首选项对象中，而共享首选项对象可以通过
 `PreferenceManager.getDefaultSharedPreferences(Context context);`
 来访问
+
+从 API 11 开始以**PreferenceFragment**的形式引入了一种新的创建首选项界面的方式。用它来替代**PreferenceActivity**。
+
