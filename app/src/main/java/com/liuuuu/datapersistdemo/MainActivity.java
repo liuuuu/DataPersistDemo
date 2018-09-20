@@ -10,8 +10,8 @@ import android.widget.ListView;
 
 public class MainActivity extends ListActivity {
 
-    Class[] classes = {};
-    String[] titles = {};
+    Class[] classes = {SettingsActivity.class, HomeActivity.class};
+    String[] titles = {"PreferenceActivity实战", "加载默认首选项的Activity"};
 
 
     @Override
