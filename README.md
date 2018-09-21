@@ -28,3 +28,24 @@ PreferenceActivity 中只需调用`addPreferencesFromResource(R.xml.settings)`�
 
 首选项需要**读取**保存在 **sharedPreferences** 中的当前值时，可以调用某个类型化的 **getPersistedXxx()** 方法，如: **getPersistedInt()**，返回首选项正在持久化的值类型(integer、boolean、string 等)。相反，要**保存**新值时，可以使用类型持久化的 **persistXxx()** 方法，更新 **SharedPreferences**。
 
+## 简单数据存储
+
+以简单低开销的方式持久存储一些基本数据。通过 **SharedPreferences** 对象，应用可以快速创建一个或多个存储位置，稍后可以在这些位置保存或查询数据。实际，这些对象以 XML 文件的形式存储在应用程序的用户数据区中。
+最好创建多个 **SharedPreferences** 对象，如用户退出时需要删除的数据，保存在单独创建的首选项对象中，删除只需要调用 `SharedPreferences.Editor.clear()`。
+
+**实现**
+当创建 **Activity** 时，通过 `Activity.getPreferences()` 获得一个 **SharedPreferences** 对象，多有持久化数据都会保存在这里。因为所有操作都是在私有的首选项对象中进行的，所以清空这些数据，并不会影响以其他方式保存的用户设置。
+
+**创建通用的 SharedPreferences**
+前面是单独的 Activity 中使用单个的 **SharedPreferences** 对象，该对象通过 `Activity.getPreferences()` 得到。实际上，这个方法只是 `Context.getSharedPreferences()` 的一个为方便使用而实现的封装方法，使用 **Activity** 的名称作为首选项的保存名称。为实现多个 **Activity** 实例共享，需要调用 `getSharedPreferences()` 并传入响应名称。
+
+**关于模式的说明**
+`Context.getSharedPreferences()`回接受一个模式参数。**MODE_PRIVAT** 代表默认行为，只允许创建这个 **SharedPreferences** 的应用程序对该 **SharedPreferences** 进行读写。还有其他模式参数：**MODE_WORLD_READABLE** 和 **MODE_WORLD_WRITEABLE**。这两个模式允许其他应用程序访问首选项。不过，外部应用程序也需要有一个指向创建首选项文件的包的有效 **Context** 来访问文件。
+
+```
+Context ohterContext = createPackageContext("packageName", 0);
+
+SharedPreferences externalPreferences = otherContext
+                        .getSharedPreferences(PREF_NAME, 0);
+```
+

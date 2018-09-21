@@ -17,7 +17,10 @@
             </intent-filter>
         </activity>
         <activity android:name=".SettingsActivity" />
-        <activity android:name=".HomeActivity"></activity>
+        <activity android:name=".HomeActivity" />
+        <activity android:name=".FormActivity" />
+        <activity android:name=".ActivityOne" />
+        <activity android:name=".ActivityTwo"></activity>
     </application>
 
 </manifest>
