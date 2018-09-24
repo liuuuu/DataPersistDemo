@@ -10,8 +10,10 @@ import android.widget.ListView;
 
 public class MainActivity extends ListActivity {
 
-    Class[] classes = {SettingsActivity.class, HomeActivity.class, FormActivity.class,ActivityOne.class,ActivityTwo.class};
-    String[] titles = {"PreferenceActivity实战", "加载默认首选项的Activity", "简单数据存储","通用\tSharedPreferences(存)","通用\tSharedPreferences(取)"};
+    Class[] classes = {SettingsActivity.class, HomeActivity.class, FormActivity.class,
+            ActivityOne.class, ActivityTwo.class, InternalActivity.class, ExternalActivity.class};
+    String[] titles = {"PreferenceActivity实战", "加载默认首选项的Activity", "简单数据存储",
+            "通用\tSharedPreferences(存)", "通用\tSharedPreferences(取)", "内部存储", "外部存储"};
 
 
     @Override

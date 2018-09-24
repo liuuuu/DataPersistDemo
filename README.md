@@ -49,3 +49,58 @@ SharedPreferences externalPreferences = otherContext
                         .getSharedPreferences(PREF_NAME, 0);
 ```
 
+## 读写文件
+
+**Android** 支持所有标准 **Java** 文件 **I/O API**，用于执行创建、读取、更新和删除操作。应用程序可以在三个主要位置操作文件：
+* **内部存储**：受保护的用于读写文件数据的目录空间。
+* **外部存储**：外部挂载的用于读写文件数据的空间。**API Level 4** 以上需要 **WRITE_EXTERNAL_STORAGE** 权限。通常是设备 **SD** 卡。
+* **Assets**：**APK** 包中只读的受保护空间，用于放置不能/不应该被编译的本地资源。
+
+**实现机制**
+传统 **Java** 类 **FileInputStream** 和 **FileOutputStream** 为主。
+
+内部存储
+在内部存储中中创建和修改文件的位置，可以使用 `Context.openFileInput()`和`Context.openFileOutput()`方法。*这两个方法需要文件名称作为参数，而不是文件的完整路径*。它们会引用应用程雪受保护目录空间中的文件，并不会关心设备的确切文件目录位置。
+
+外部存储
+内部与外部存储最大区别是外部存储器是可挂载的。所以用户可以将设备连接至电脑然后将设备的外部存储器挂载到计算机上。
+需要注意添加：**android.permission.WRITE_EXTERNAL_STORAGE**权限
+当外部存储器被挂载到其他设备上时，应用程序不可访问它。因此，最好经常使用 `Environment.getExternalStorageState()`先检查一下外部存储器是否可用，若该状态**不等于**，`Environment.MEDIA_MOUNTED`(未安装)就意味外部存储器不可写入。
+
+写入文件时的注意事项
+FileOutputStream 这样的 Java API 没有与内核中的原生文件描述符共享1:1的关系。通常，使用 write()将数据写入流时，数据会直接写入文件的内存缓冲区并异步写出磁盘。在大多数情况下，只要严格在Dalvik虚拟机中进行文件访问，不会出现刚刚写入的文件，并且读取时没有任何问题。然而，当移动设备处理移动存储设备(如SD卡)时，我们要保证文件数据沿着各种途径到达文件系统，之后再返回一些操作给用户，因为用户有能力物理的移除存储介质。以下为写入外部文件时使用的良好标准代码块：
+
+```
+// 写入数据
+out.write();
+// 清空流缓冲区
+out.flush();
+// 同步所有数据到文件系统
+mOutput.getFD().sync();
+// 关闭流
+mOutput.close();
+```
+
+外部系统目录
+Environment和Context的其他方法也能够访问外部存储器上其他一些标准的位置，在这些位置可以写入一些特殊文件。它们有一些特殊属性
+* Environment.getExternalStoragePublicDirectory(String type)
+    * API Level 8
+    * 返回一个所有应用程序保存媒体文件的通用目录。该目录对用户和其他应用程序都可见。特别是，Gallery这样的应用程序，这里的媒体文件可能会被扫描加入到设备的MediaStore中。
+    * type参数的有效值可以为**DIRECTORY_PICTURES**、**DIRECTORY_MUSIC**、**DIRECTORY_MOVIES**和**DIRECTORY_RINGTONES**。
+* Context.getExternalFilesDir(String type)
+    * API Level 8
+    * 返回外部存储器上的媒体文件目录，但只使用与某个应用程序。这里的媒体文件不是公开的，并不会出现在 MediaStore 中。
+    * 由于该目录在外部存储器上，因此其他用户和应用程序时可以看到并直接编译文件：并不是强制安全的。
+    * 放在这里的文件在卸应用程序时会被删除，因此对于应用程序需要使用大内容文件而同时又不希望保存到内部存储器的场景，这里是绝佳去处。
+    * type参数的有效值可以为**DIRECTORY_PICTURES**、**DIRECTORY_MUSIC**、**DIRECTORY_MOVIES**和**DIRECTORY_RINGTONES**。
+* Context.getExternalCacheDir()
+    * API Level 8
+    * 返回一个外部存储器上供某一个应用程序特有临时文件使用的目录。这个目录的内容对用户和其他应用程序都是看见的。
+    * 放在这里的文件在卸应用程序时会被删除，因此对于应用程序需要使用大内容文件而同时又不希望保存到内部存储器的场景，这里是绝佳去处。
+* Context.getExternalFileDirs()和Context.getExternalCacheDirs()
+    * API Level 19
+    * 与前面描述的对应属性有同等的功能，但是返回设备上每个存储卷的路径列表(主卷和任意副卷)。
+    * 例如，某个设备可采用一块内置闪存为主要外部存储器，同时使用移动 SD 卡作为次要外部存储器。
+* Context.getExternalMediaDirs()
+    * API Level 21
+    * 放在这些卷中的文件将自动被扫描并添加到设备的介质存储，以便显示给其他应用程序。这些文件通常也通过核心应用程序(如 Gallery)对用户看见。

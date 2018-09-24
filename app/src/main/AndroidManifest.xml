@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.liuuuu.datapersistdemo">
 
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -20,7 +22,9 @@
         <activity android:name=".HomeActivity" />
         <activity android:name=".FormActivity" />
         <activity android:name=".ActivityOne" />
-        <activity android:name=".ActivityTwo"></activity>
+        <activity android:name=".ActivityTwo" />
+        <activity android:name=".InternalActivity" />
+        <activity android:name=".ExternalActivity"></activity>
     </application>
 
 </manifest>
