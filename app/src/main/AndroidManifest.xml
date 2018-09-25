@@ -24,7 +24,8 @@
         <activity android:name=".ActivityOne" />
         <activity android:name=".ActivityTwo" />
         <activity android:name=".InternalActivity" />
-        <activity android:name=".ExternalActivity"></activity>
+        <activity android:name=".ExternalActivity" />
+        <activity android:name=".AssetActivity"></activity>
     </application>
 
 </manifest>

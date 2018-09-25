@@ -104,3 +104,24 @@ Environment和Context的其他方法也能够访问外部存储器上其他一�
 * Context.getExternalMediaDirs()
     * API Level 21
     * 放在这些卷中的文件将自动被扫描并添加到设备的介质存储，以便显示给其他应用程序。这些文件通常也通过核心应用程序(如 Gallery)对用户看见。
+
+## 以资源的形式使用文件
+
+应用程序需要使用不能被 **Android** 编译为资源 **ID** 的资源文件
+
+应用程序可以在 **assets** 目录中保存需要读取的文件，如本地 **HTML** 文件、都好分隔值(**CSV**)或专有数据。**assets** 目录是 **Android** 应用程序的一个受保护文件目录。这个目录下的文件会和**APK**一起打包，并不会被处理或编译。和其他应用程序资源一样， **assets** 中的文件都是只读的。
+
+虽然可以使用 **assets** 直接向小部件(如 **WebView**、**MediaPlayer**)中加载内容，但是，很多情况下，使用 **InputStream** 也能够很好的访问 **assets**。
+
+例如有一文件 data.csv 存放在 assets 目录中，可用：
+
+```
+// 访问应用程序的 assets 目录
+AssetManager manager = getAssets();
+// 打开数据文件
+InputStream mInput = manager.open("data.csv");
+```
+获得输入流来读取其中的数据。
+
+**解析 CSV 数据**
+逗号分隔值（**Comma-Separated Values，CSV**，有时也称为字符分隔值，因为分隔字符也可以不是逗号），其文件以纯文本形式存储表格数据（数字和文本）。解析这种文件是会获取整个文件并读入一个字节数组中，然后转换为单独的字符串进行处理。这种方式在需要处理数据量很大时并不是最省内存的，但是处理小文件还是比较合适的。
