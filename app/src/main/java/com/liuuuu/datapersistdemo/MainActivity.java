@@ -12,10 +12,10 @@ public class MainActivity extends ListActivity {
 
     Class[] classes = {SettingsActivity.class, HomeActivity.class, FormActivity.class,
             ActivityOne.class, ActivityTwo.class, InternalActivity.class, ExternalActivity.class,
-            AssetActivity.class};
+            AssetActivity.class, DbActivity.class};
     String[] titles = {"PreferenceActivity实战", "加载默认首选项的Activity", "简单数据存储",
             "通用\tSharedPreferences(存)", "通用\tSharedPreferences(取)", "内部存储", "外部存储",
-            "以资源的形式使用文件"};
+            "以资源的形式使用文件", "管理数据库"};
 
 
     @Override

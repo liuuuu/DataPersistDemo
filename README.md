@@ -125,3 +125,26 @@ InputStream mInput = manager.open("data.csv");
 
 **解析 CSV 数据**
 逗号分隔值（**Comma-Separated Values，CSV**，有时也称为字符分隔值，因为分隔字符也可以不是逗号），其文件以纯文本形式存储表格数据（数字和文本）。解析这种文件是会获取整个文件并读入一个字节数组中，然后转换为单独的字符串进行处理。这种方式在需要处理数据量很大时并不是最省内存的，但是处理小文件还是比较合适的。
+
+## 管理数据库
+
+通过 SQLiteOpenHelper 的帮助创建一个 SQLiteDatabase 以管理数据存储。
+SQLiteOpenHelper 可以管理数据库的创建和修改。这里还是创建数据库后设置初始值和默认值得最佳场所。
+数据是以 **ContentValues** 对象的形式插入数据库中的。**SQLiteDatabase.insert()** 需要的参数为**数据库的表名**、**空字段填充**和代表插入记录的 **ContentValues**。
+空字段填充是当传递给 **inset()** 的 **ContentValues** 是空的时，系统将会从这个参数中获取数据填充默认值。避免引用字段的内容是 **NULL**。
+
+**数据库升级**
+如果设备上的数据库版本和当前版本（即构造函数中传入的版本号）不一致，`onUpgrade()`就会被调用。**版本升级时，最好不要删除字段**。
+以下为简单示例：
+
+```
+// 在 v1 的基础进行升级。添加电话号码字段
+if (oldVersion <= 1) {
+    db.execSQL("ALTER TABLE " + TABLE_NAME + " ADD COLUMN phone_number INTEGER;");
+}
+// 在 v2 的基础上进行升级。添加日期输入字段
+if (oldVersion <= 2) {
+    db.execSQL("ALTER TABLE " + TABLE_NAME + " ADD COLUMN entry_date DATE");
+}
+```
+示例中，如果用户现在为版本1，两条语句都会执行。如果是版本2，那就只会执行后一条语句。这两种情况下，都会保留应用程序数据库中现有的数据。
