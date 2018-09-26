@@ -207,3 +207,31 @@ String[] args = new String[]{"7", "10"};
 Cursor result = db.query(TABLE_NAME, COLUMNS, selection, args,
     null, null, null, null);
 ```
+
+## 备份数据
+
+设备外部存储器可以安全的保存数据库和其他文件的副本。因为外部存储器一般是物理可拆卸的，可以移动到另一台设备上进行恢复。或挂在到计算机上，进行数据传输。
+
+**具体实现**
+主要用到了文件复制方法
+
+```
+import java.nio.channels.FileChannel;
+
+private void fileCopy(File source, File dest) throws IOException {
+    FileChannel inChannel = new FileInputStream(source).getChannel();
+    FileChannel outChannel = new FileOutputStream(dest).getChannel();
+    try {
+        inChannel.transferTo(0, inChannel.size(), outChannel);
+    } finally {
+        if (inChannel != null) {
+            inChannel.close();
+        }
+        if (outChannel != null) {
+            outChannel.close();
+        }
+    }
+}
+```
+
+用到了 **Java** **NIO** 的 **transferTo()** 方法，该方法效率较文件流读取更高！更大文件差别更明显。
