@@ -148,3 +148,62 @@ if (oldVersion <= 2) {
 }
 ```
 示例中，如果用户现在为版本1，两条语句都会执行。如果是版本2，那就只会执行后一条语句。这两种情况下，都会保留应用程序数据库中现有的数据。
+
+## 查询数据库
+
+使用`SQLiteDatabase.query()`查询，这个方法有好几种重载形式。以下面最复杂形式为例：
+
+```
+public Cursor query(String table, // 查询数据库表
+        String[] columns, // 要访问的每条记录的列
+        String selection, // 给定查询 SQL WHERE 子句
+        String[] selectionArgs, // 如果 selection 语句中有问号，就用这里的元素逐个填充
+        String groupBy, // 给定查询的 SQL GROUP BY 子句
+        String having, // 给定查询的 SQL HAVING 子句
+        String orderBy, // 给定查询的 SQL ORDER BY 子句
+        String limit) // 查询返回结果的数量上限
+```
+以下为设置参数的例子：
+
+* 返回其中的值能匹配给定参数的所有行：
+
+```
+String[] COLUMNS = new String[]{COL_NAME, COL_DATE};
+String selection = COL_NAME + " = ?";
+String[] args = new String[]{"NAME_TO_MATCH"};
+Cursor result = db.query(TABLE_NAME, COLUMNS, selection, args, 
+    null, null, null, null);
+```
+
+* 返回最近插入数据库的 10 行记录：
+
+```
+String[] COLUMNS = new String[]{COL_NAME, COL_DATE};
+String orderBy = "_id DESC";
+String limit = "10";
+Cursor result = db.query(TABLE_NAME, COLUMNS, null, null, 
+    null, null, orderBy, limit);
+```
+
+* 查询日期字段在指定范围内的行
+
+```
+String[] COLUMNS = new String[]{COL_NAME, COL_DATE};
+String selection = "datetime(" + COL_DATE + ") > datetime(?)" +
+    " AND datetime(" + COL_DATE + ") < datetime(?)";
+String[] args = new String[]{"2000-1-1 00:00:00", "2018-09-25 23:59:59"};
+Cursor result = db.query(TABLE_NAME, COLUMNS, selection, args,
+    null, null, null, null);
+```
+
+在 **SQLite** 中创建表时可以声明 **DATE** 类型，但实际上 **SQLite** 并没有专门的日期类型数据。可以用标准的 **SQL** 日期和时间函数，以 **TEXT**、**INTEGER** 或 **REAL** 的形式表示日期和时间。这里是将数据库中的值和已经格式化的开始和结束时间字符串传递给 **datetime()**，然后比较返回的值。
+
+* 返回整形字段在指定范围内的行
+
+```
+String[] COLUMNS = new String[]{COL_NAME, COL_AGE};
+String selection = COL_AGE + " > ? AND " + COL_AGE + " < ?";
+String[] args = new String[]{"7", "10"};
+Cursor result = db.query(TABLE_NAME, COLUMNS, selection, args,
+    null, null, null, null);
+```

@@ -2,6 +2,7 @@ package com.liuuuu.datapersistdemo;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -53,5 +54,68 @@ public class MyDbHelper extends SQLiteOpenHelper {
         if (oldVersion <= 2) {
             db.execSQL("ALTER TABLE " + TABLE_NAME + " ADD COLUMN entry_date DATE");
         }
+    }
+
+
+    /**
+     * 返回其中的值能匹配给定参数的所有行
+     *
+     * @param db
+     * @param name
+     * @return
+     */
+    private Cursor query(SQLiteDatabase db, String name) {
+        String[] COLUMNS = new String[]{COL_NAME, COL_DATE};
+        String selection = COL_NAME + " = ?";
+        String[] args = new String[]{"NAME_TO_MATCH"};
+        Cursor result = db.query(TABLE_NAME, COLUMNS, selection, args,
+                null, null, null, null);
+        return result;
+    }
+
+    /**
+     * 查询最近插入数据库的 10 行记录
+     *
+     * @param db
+     * @return
+     */
+    private Cursor queryRecentlyTen(SQLiteDatabase db) {
+        String[] COLUMNS = new String[]{COL_NAME, COL_DATE};
+        String orderBy = "_id DESC";
+        String limit = "10";
+        Cursor result = db.query(TABLE_NAME, COLUMNS, null, null, null, null, orderBy, limit);
+        return result;
+    }
+
+    /**
+     * 查询日期字段在指定范围内的行
+     *
+     * @param db
+     * @return
+     */
+    private Cursor queryDate(SQLiteDatabase db) {
+        String[] COLUMNS = new String[]{COL_NAME, COL_DATE};
+        String selection = "datetime(" + COL_DATE + ") > datetime(?)" +
+                " AND datetime(" + COL_DATE + ") < datetime(?)";
+        String[] args = new String[]{"2000-1-1 00:00:00", "2018-09-25 23:59:59"};
+        Cursor result = db.query(TABLE_NAME, COLUMNS, selection, args, null, null, null, null);
+        return result;
+    }
+
+    public static final String COL_AGE = "pAge";
+
+    /**
+     * 返回整形字段在指定范围内的行
+     *
+     * @param db
+     * @return
+     */
+    private Cursor queryInt(SQLiteDatabase db) {
+        String[] COLUMNS = new String[]{COL_NAME, COL_AGE};
+        String selection = COL_AGE + " > ? AND " + COL_AGE + " < ?";
+        String[] args = new String[]{"7", "10"};
+        Cursor result = db.query(TABLE_NAME, COLUMNS, selection, args, null, null, null, null);
+        return result;
+
     }
 }
