@@ -235,3 +235,95 @@ private void fileCopy(File source, File dest) throws IOException {
 ```
 
 用到了 **Java** **NIO** 的 **transferTo()** 方法，该方法效率较文件流读取更高！更大文件差别更明显。
+
+## 分享数据库
+
+将应用程序的数据库内容提供给设备上的其他应用程序使用。
+
+创建 **ContentProvider** 作为应用程序数据的外部接口。**ContentProvider** 可以通过与数据库接口雷瑟的 **query()**、**insert()**、**update()**和 **delete()**方法将特定的数据集暴露给外部请求。接口与实际数据模型之间的映射关系可以灵活定制。
+要操作的数据集通常会编码为**Uri**，然后传递给 **ContentProvider**。例如，发送 **content://com.liuuuu.myprovider/friends** 这样的查询 **Uri** 就是告诉提供程序返回 **friends** 表中的数据，而 **content://com.liuuuu.myprovider/friends/15** 则意味着查询结果中返回 **id** 为 15 的记录。所以我们必须确保创建的 **ContentProvider** 符合这个规范。因为它本身并没有提供这种功能。
+创建 FriendProvider，并完成清单声明
+
+```
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application ...>
+        <provider
+            android:name=".FriendProvider"
+            android:authorities="com.examples.datapersistdemo.friendprovider"
+            android:enabled="true"
+            android:exported="true"/>
+    </application>
+
+</manifest>
+```
+
+**android:authorities**最好用包名加类名全小写，方便记忆。
+
+在 **Provider** 类中:
+
+* 定义 **Uri** 需要用到这个属性来访问它
+
+```
+public static final Uri CONTENT_URI =
+    Uri.parse("content://com.examples.datapersistdemo.friendprovider/friends");
+```
+* 添加 **UriMatcher** 类会将 **Uri** 和设定好的一组模式进行比较，然后以整形形式返回匹配模式，如果没找到，就返回 **UriMatcher.NO_MATCH**。
+
+```
+/* 匹配 Uri */
+private static final int FRIEND = 1;
+private static final int FRIEND_ID = 2;
+
+private static final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
+
+static { // 添加匹配模式
+    matcher.addURI(CONTENT_URI.getAuthority(), "friends", FRIEND);
+    matcher.addURI(CONTENT_URI.getAuthority(), "friends/#", FRIEND_ID);
+}
+```
+1. **UriMatcher.match()** 会将 Uri 与设定好的一组模式进行比较
+2. **UriMatcher.addURI()** 会对一组模式进行初始化，这些工作最好在静态块中完成，这样在刚加载时就会初始化。
+3. 在提供模式中可以使用**两个通配符**：用来匹配数字的(#)和用来匹配任意文本的(*)
+
+##### 创建一个访问共享数据库的应用：
+
+在 Activity 中实现`LoaderManager.LoaderCallbacks<Cursor>`接口，再在 onCreate()中调用`getLoaderManager().initLoader(id, null, this);`其中 ID 为任意值。
+
+LoaderCallbacks接口三个方法实现：
+
+```
+// 在创建时直接传入查询所有的 Uri
+// Uri: "content://com.liuuuu.datapersistdemo.friendprovider/friends"
+// 从而获得相应的数据
+@Override
+public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+    String[] projection = new String[]{Columns._ID, Columns.FIRST};
+    return new CursorLoader(this, CONTENT_URI, projection, null, null, null);
+}
+
+// 加载结束时，返回相关数据
+@Override
+public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+    mAdapter.swapCursor(data);
+}
+
+@Override
+public void onLoaderReset(Loader<Cursor> loader) {
+    mAdapter.swapCursor(null);
+}
+```
+
+传入 ID 对 friends 表进行查询如下：
+
+```
+// 对查询URI进行加工:
+//  "content://com.liuuuu.datapersistdemo.friendprovider/friends/id"
+Uri uri = Uri.withAppendedPath(CONTENT_URI, id);
+// 设置要查询的列
+String[] projection = new String[]{Columns.FIRST, Columns.LAST, Columns.PHONE};
+// 得到全部记录
+Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
+// 可能有多条记录，将游标移植首位，获得第一条数据
+cursor.moveToFirst();
+```

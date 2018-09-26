@@ -27,7 +27,13 @@
         <activity android:name=".ExternalActivity" />
         <activity android:name=".AssetActivity" />
         <activity android:name=".DbActivity" />
-        <activity android:name=".BackupActivity"></activity>
+        <activity android:name=".BackupActivity" />
+
+        <provider
+            android:name=".FriendProvider"
+            android:authorities="com.liuuuu.datapersistdemo.friendprovider"
+            android:enabled="true"
+            android:exported="true"/>
     </application>
 
 </manifest>
