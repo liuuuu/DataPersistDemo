@@ -327,3 +327,156 @@ Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
 // 可能有多条记录，将游标移植首位，获得第一条数据
 cursor.moveToFirst();
 ```
+
+## 分享 SharedPreferences
+
+将 SharedPreference 中的设置提供给系统的其他应用程序使用，这需要权限的允许。
+
+创建 ContentProvider 作为应用程序的 SharedPreference 与系统其他应用程序的接口。设置数据将通过 MatrixCursor 传递，该实现可以用来处理非数据库的数据。
+
+#### 具体实现——数据分享方：
+
+* 确定**URI**，不要与系统其它URI重复。“content://包名.类名.方法名”
+
+```
+public static final Uri CONTENT_URI = 
+    Uri.parse("content://com.liuuuu.datapersistdemo.settingsprovider/settings");
+```
+
+* 继承 **ContentProvider** 类，实现`query()`和`update()`方法
+
+    * **query()**方法中：
+
+    因为是查询方法，所以需要数据的传递。**MatrixCursor** 这个矩阵游标是用来处理非数据库中的数据，它会迭代需要的字段列表并根据所包含的字段构建每行数据，传入参数为‘列名称数组 String[] columnNames’。`MatrixCursor cursor = new MatrixCursor(projection);`按行向该对象中添加数据`MatrixCursor.RowBuilder builder = cursor.newRow();`创建 builder 对象，通过该方法`builder.add();`添加数据。如果 projection = {"name", "value"}：
+    
+    | name | value |
+    | --- | --- |
+    | preferenceEnabled | true |
+    | preferenceName | Xiao ming |
+    | preferenceSelection | Four |
+如果需要查询特定值就需要对 **String selection** 和 **String[] selectionArgs** 进行处理，
+
+    ```
+    // 判断 selection 来确定要查询的数据
+    ...
+    // 解析键值并检查它是否存在
+    if (selectionArgs != null) {
+        // 获得相应的 键名
+        for (String key : selectionArgs) {
+            // 判断 Preference 中是否包含该键
+            if (preferences.containsKey(key)) {
+                // 得到需要的条目
+                MatrixCursor.RowBuilder builder = cursor.newRow();
+                ...
+                builder.add(...);
+                ...
+            }
+        }
+    }
+
+    ```
+
+    添加完数据，将 **MatrixCursor** 返回。
+    
+    * **update()**方法中：
+    
+    主要是对 **ContentValues values** 这个参数做处理，**ContentValues** 本质上是一个 **HashMap<String, Object>**，通过`String key = values.getAsString(Columns.NAME);`来获得要更新的首选项的key，然后通过`Object value = values.get(Columns.VALUE);`获得相应的值，最后用`editor.putXxx(key, value);`将数据保存起来，`editor.commit();`之后，不要忘了`getContext().getContentResolver().notifyChange(CONTENT_URI, null);`来通知观察者数据更新了。
+
+* 修改清单文件，管理 **读/写** 权限
+
+在 **AndroidManifest.xml** 中声明两个自定义的 `<permission>` 元素
+
+```
+<permission
+    android:name="com.liuuuu.datapersistdemo.permission.READ_PREFERENCE"
+    android:label="Read Application Settings"
+    android:protectionLevel="normal" />
+<permission
+    android:name="com.liuuuu.datapersistdemo.permission.WRITE_PREFERENCE"
+    android:label="Write Application Settings"
+    android:protectionLevel="dangerous" />
+
+<uses-permission android:name="com.liuuuu.datapersistdemo.permission.READ_PREFERENCE" />
+<uses-permission android:name="com.liuuuu.datapersistdemo.permission.WRITE_PREFERENCE" />
+```
+
+并将这两个自定义的 `<permission>` 元素添加到 `<provider>` 声明中，之后 Android 就会对 query()方法添加读取权限，对insert()、update()和delete()方法添加写入权限。**另外在 Activity 节点中声明了一个自定义的`<intent-filter>`，在外部应用想要直接启动该界面时使用。**
+
+```
+<provider
+    android:name=".SettingsProvider"
+    android:authorities="com.liuuuu.datapersistdemo.settingsprovider"
+    android:enabled="true"
+    android:exported="true"
+    android:readPermission="com.liuuuu.datapersistdemo.permission.READ_PREFERENCE"
+    android:writePermission="com.liuuuu.datapersistdemo.permission.WRITE_PREFERENCE" />
+```
+
+**注意：**设置`android:exported="true"`在API 16 或以下版本默认为true，高版本默认是false，这个属性用于指示该服务是否能够被其他应用程序组件调用或跟它交互。
+
+#### 具体实现——数据操作获取方
+
+* 需要定义相同的 URI 用来进行定位
+
+```
+public static final Uri SETTINGS_CONTENT_URI = 
+    Uri.parse("content://com.liuuuu.datapersistdemo.settingsprovider/settings");
+```
+
+* 同样需要修改清单文件，添加读写权限。
+
+```
+<uses-permission android:name="com.liuuuu.datapersistdemo.permission.READ_PREFERENCE" />
+<uses-permission android:name="com.liuuuu.datapersistdemo.permission.WRITE_PREFERENCE" />
+```
+
+如果没有添加，通过 **ContentResolver** 的请求就会导致 **SecurityException** 异常。
+
+* 添加观察者来监听数据的变化
+
+```
+getContentResolver()
+    .registerContentObserver(SETTINGS_CONTENT_URI, false, mObserver);
+
+private ContentObserver mObserver = new ContentObserver(new Handler()) {
+    @Override
+    public void onChange(boolean selfChange) {
+        // 数据发生变化，进行相关操作
+    }
+};
+```
+相关参数：
+> uri: 需要监听的 uri。
+> notifyForDescendants: 为 false 表示精确匹配，即只匹配该 Uri。为 true 表示可以同时匹配其派生的 Uri。
+> observer：ContentObserver 的实例。
+
+* 修改数据
+
+```
+ContentValues cv = new ContentValues(2);
+cv.put(SettingsColumns.NAME, "preferenceEnabled");
+cv.put(SettingsColumns.VALUE, isChecked);
+
+//更新提供程序，这会触发我们的观察者
+getContentResolver().update(SETTINGS_CONTENT_URI, cv, null, null);
+```
+这里调用 update() 方法，会触发分享方的 Provider 类中定义的 update() 方法。
+
+* 查询数据
+
+```
+Cursor c = getContentResolver().query(SETTINGS_CONTENT_URI,
+                new String[]{SettingsColumns.NAME, SettingsColumns.VALUE},
+                null, null, null);
+```
+
+该方法同样会调用 Provider 类中的 query() 方法，根据传入的参数，进行相关查询，并返回一个 Cursor 对象。
+
+获取数据：
+
+```
+String key = c.getString(0);
+Object value = c.getString(1);
+// 获取下一对数据
+c.moveToNext();
+```

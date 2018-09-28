@@ -10,4 +10,10 @@
         <item>RED</item>
         <item>GRN</item>
     </string-array>
+    <string-array name="selection_items">
+        <item>One</item>
+        <item>Two</item>
+        <item>Three</item>
+        <item>Four</item>
+    </string-array>
 </resources>
