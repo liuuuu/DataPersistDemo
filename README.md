@@ -1,5 +1,5 @@
 # 数据持久化项目
-
+[TOC]
 ## 制作首选项界面
 
 通过`PreferenceActivity`和`XML Preference`层次结构就可以一次性解决用户界面、键/值组合以及数据持久化的问题。
@@ -289,7 +289,7 @@ static { // 添加匹配模式
 2. **UriMatcher.addURI()** 会对一组模式进行初始化，这些工作最好在静态块中完成，这样在刚加载时就会初始化。
 3. 在提供模式中可以使用**两个通配符**：用来匹配数字的(#)和用来匹配任意文本的(*)
 
-##### 创建一个访问共享数据库的应用：
+### 创建一个访问共享数据库的应用
 
 在 Activity 中实现`LoaderManager.LoaderCallbacks<Cursor>`接口，再在 onCreate()中调用`getLoaderManager().initLoader(id, null, this);`其中 ID 为任意值。
 
@@ -337,7 +337,7 @@ cursor.moveToFirst();
 
 创建 ContentProvider 作为应用程序的 SharedPreference 与系统其他应用程序的接口。设置数据将通过 MatrixCursor 传递，该实现可以用来处理非数据库的数据。
 
-#### 具体实现——数据分享方：
+### 具体实现——数据分享方：
 
 * 确定**URI**，不要与系统其它URI重复。“content://包名.类名.方法名”
 
@@ -417,7 +417,7 @@ public static final Uri CONTENT_URI =
 
 **注意：**设置`android:exported="true"`在API 16 或以下版本默认为true，高版本默认是false，这个属性用于指示该服务是否能够被其他应用程序组件调用或跟它交互。
 
-#### 具体实现——数据操作获取方
+### 具体实现——数据操作获取方
 
 * 需要定义相同的 URI 用来进行定位
 
@@ -488,7 +488,7 @@ c.moveToNext();
 
 将应用程序维护的文件或其他私有数据提供给设备上的其他应用程序使用，需要创建 **ContentProvider** 作为应用程序对外的接口。通过 **query()，insert()，update() 和 delete()，**将任意数据暴露给外部请求。具体实现可以自由定义如何将这些方法传来的数据传递给实际模型。**ContentProvider** 可以暴露任何类型的数据，包括各种资源以及 **assets** 目录下的资源。
 
-#### 共享实现
+### 共享实现
 
 创建一个暴露两个数据源的 ContentProvider 实现：一个数据源是内存中的字符串，另一个是应用程序的 asset 目录中存储的一系列图片文件。
 
@@ -536,7 +536,7 @@ switch (requested) {
 return afd;
 ```
 
-#### 共享获取数据
+### 共享获取数据
 
 在获取数据的 Activity 中获得 LoaderManager 并初始化相应的回调。
 
