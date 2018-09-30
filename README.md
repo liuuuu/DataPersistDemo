@@ -268,6 +268,9 @@ private void fileCopy(File source, File dest) throws IOException {
 public static final Uri CONTENT_URI =
     Uri.parse("content://com.examples.datapersistdemo.friendprovider/friends");
 ```
+
+* 在 ContentProvider 的 insert()、delete()、update()和query()方法中，直接调用数据库的相同方法，它们的参数也大致相同。
+
 * 添加 **UriMatcher** 类会将 **Uri** 和设定好的一组模式进行比较，然后以整形形式返回匹配模式，如果没找到，就返回 **UriMatcher.NO_MATCH**。
 
 ```
@@ -480,3 +483,96 @@ Object value = c.getString(1);
 // 获取下一对数据
 c.moveToNext();
 ```
+
+## 分享其他数据
+
+将应用程序维护的文件或其他私有数据提供给设备上的其他应用程序使用，需要创建 **ContentProvider** 作为应用程序对外的接口。通过 **query()，insert()，update() 和 delete()，**将任意数据暴露给外部请求。具体实现可以自由定义如何将这些方法传来的数据传递给实际模型。**ContentProvider** 可以暴露任何类型的数据，包括各种资源以及 **assets** 目录下的资源。
+
+#### 共享实现
+
+创建一个暴露两个数据源的 ContentProvider 实现：一个数据源是内存中的字符串，另一个是应用程序的 asset 目录中存储的一系列图片文件。
+
+在 ContentProvider 类中的 query() 方法中添加相关查询方法：
+
+```
+public Cursor query(Uri uri, String[] projection, String selection,
+                    String[] selectionArgs, String sortOrder) {
+    MatrixCursor cursor = new MatrixCursor(projection);
+    for (int i = 0; i < mNames.length; i++) {
+        // 只插入请求的字段
+        MatrixCursor.RowBuilder builder = cursor.newRow();
+        for (String column :
+                projection) {
+            if (column.equals("_id")) {
+                // 使用数组索引作为唯一id
+                builder.add(i);
+            }
+            if (column.equals(COLUMN_NAME)) {
+                builder.add(mNames[i]);
+            }
+            if (column.equals(COLUMN_IMAGE)) {
+                builder.add(Uri.withAppendedPath(CONTENT_URI, String.valueOf(i)));
+            }
+        }
+    }
+    return cursor;
+}
+```
+
+查询方法中返回了 **内存中的字符串** 和我们生成的 **图片URI**，并在 **ContentProvider** 中的 **openAssetFile()** 方法中实现了如何根据这些URI返回相应图片的 **AssetFileDescriptor** 对象。
+**图片文件的内容Uri**是以提供程序的内容Uri为基础，加上数组索引构建而成。
+
+```
+int requested = Integer.parseInt(uri.getLastPathSegment());
+AssetFileDescriptor afd;
+AssetManager manager = getContext().getAssets();
+...
+switch (requested) {
+    case 0:
+        afd = manager.openFd("logo1.png");
+        break;
+    ...
+}
+return afd;
+```
+
+#### 共享获取数据
+
+在获取数据的 Activity 中获得 LoaderManager 并初始化相应的回调。
+
+```
+...
+... Activity implements LoaderManager.LoaderCallbacks<Cursor>
+...
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    getLoaderManager().initLoader(LOADER_LIST, null, this);
+    setContentView(R.layout.activity_share_other);
+    ...
+}
+
+@Override
+public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+    String[] projection = new String[]{"_id", COLUMN_NAME, COLUMN_IMAGE};
+    return new CursorLoader(this, CONTENT_URI, projection, null, null, null);
+}
+
+@Override
+public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+    mAdapter.swapCursor(data);
+}
+
+@Override
+public void onLoaderReset(Loader<Cursor> loader) {
+    mAdapter.swapCursor(null);
+}
+```
+通过 **onCreateLoader()** 方法中的 **new CursorLoader()**来获取数据，在 **onLoadFinished(Loader<Cursor> loader, Cursor data)**来得到返回的数据 **data**。**data** 中包含在之前 **Provider** 的 **query()**方法查询到的数据。
+
+注意：根据图片URI 获取图片文件，需要通过 `getContentResolver().openInputStream(${URI})` 来获得图片的输入流。通过查看相关源码，了解到，openInputStream() 方法中会对 Uri 进行比对，不同的 Uri 调用不同的方法获得不同的输入流。而我们传入的 Uri 经过条件判断，最终通过：
+
+```
+AssetFileDescriptor fd = openAssetFileDescriptor(uri, "r", null);
+return fd.createInputStream();
+```
+`openAssetFileDescriptor()`方法最终会得到我们在 **ContentProvider** 类中重写的`openAssetFile()`返回的 **AssetFileDescriptor** 对象。从该对象获得输入流来得到图片文件。

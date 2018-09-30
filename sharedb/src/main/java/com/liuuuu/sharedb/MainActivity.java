@@ -8,8 +8,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 public class MainActivity extends ListActivity {
-    Class[] classes = {SharedbActivity.class, SharespActivity.class};
-    String[] titles = {"共享数据库", "共享 SharedPreferences"};
+    Class[] classes = {SharedbActivity.class, SharespActivity.class, ShareOtherActivity.class};
+    String[] titles = {"共享数据库", "共享 SharedPreferences", "共享其他数据"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

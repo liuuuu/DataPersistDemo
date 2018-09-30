@@ -20,7 +20,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".SharedbActivity" />
-        <activity android:name=".SharespActivity"></activity>
+        <activity android:name=".SharespActivity" />
+        <activity android:name=".ShareOtherActivity"></activity>
     </application>
 
 </manifest>
