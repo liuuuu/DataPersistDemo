@@ -1,5 +1,5 @@
 # 数据持久化项目
-[TOC]
+
 ## 制作首选项界面
 
 通过`PreferenceActivity`和`XML Preference`层次结构就可以一次性解决用户界面、键/值组合以及数据持久化的问题。
@@ -241,7 +241,7 @@ private void fileCopy(File source, File dest) throws IOException {
 将应用程序的数据库内容提供给设备上的其他应用程序使用。
 
 创建 **ContentProvider** 作为应用程序数据的外部接口。**ContentProvider** 可以通过与数据库接口雷瑟的 **query()**、**insert()**、**update()**和 **delete()**方法将特定的数据集暴露给外部请求。接口与实际数据模型之间的映射关系可以灵活定制。
-要操作的数据集通常会编码为**Uri**，然后传递给 **ContentProvider**。例如，发送 **content://com.liuuuu.myprovider/friends** 这样的查询 **Uri** 就是告诉提供程序返回 **friends** 表中的数据，而 **content://com.liuuuu.myprovider/friends/15** 则意味着查询结果中返回 **id** 为 15 的记录。所以我们必须确保创建的 **ContentProvider** 符合这个规范。因为它本身并没有提供这种功能。
+要操作的数据集通常会编码为**Uri**，然后传递给 **ContentProvider**。例如，发送 **<content://com.liuuuu.myprovider/friends>** 这样的查询 **Uri** 就是告诉提供程序返回 **friends** 表中的数据，而 **<content://com.liuuuu.myprovider/friends/15>** 则意味着查询结果中返回 **id** 为 15 的记录。所以我们必须确保创建的 **ContentProvider** 符合这个规范。因为它本身并没有提供这种功能。
 创建 FriendProvider，并完成清单声明
 
 ```
@@ -339,7 +339,7 @@ cursor.moveToFirst();
 
 ### 具体实现——数据分享方：
 
-* 确定**URI**，不要与系统其它URI重复。“content://包名.类名.方法名”
+* 确定**URI**，不要与系统其它URI重复。“<content://包名.类名.方法名”>
 
 ```
 public static final Uri CONTENT_URI = 
@@ -576,3 +576,7 @@ AssetFileDescriptor fd = openAssetFileDescriptor(uri, "r", null);
 return fd.createInputStream();
 ```
 `openAssetFileDescriptor()`方法最终会得到我们在 **ContentProvider** 类中重写的`openAssetFile()`返回的 **AssetFileDescriptor** 对象。从该对象获得输入流来得到图片文件。
+
+### ZIP文件压缩
+
+使用 **ZipOutputStream** 将输入的文件压缩，以 FileOutputStream 输出为压缩文件。
